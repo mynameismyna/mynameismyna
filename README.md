@@ -25,6 +25,9 @@ If you prefer a simple graphical interface, run `stock_cari_gui.py`. It uses
 `tkinter` and keeps the UI responsive by executing database queries in a
 background thread.
 
+The GUI now lists available ODBC drivers in a drop-down menu so you can
+select the appropriate driver without typing its name.
+
 ```bash
 python stock_cari_gui.py
 ```

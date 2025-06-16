@@ -42,9 +42,15 @@ class App:
 
         labels = ["Driver", "Server", "Database", "User ID", "Password"]
         self.entries = {}
+        available_drivers = pyodbc.drivers()
         for idx, label in enumerate(labels):
             ttk.Label(frm_conn, text=label).grid(column=0, row=idx, sticky="e", padx=5, pady=2)
-            ent = ttk.Entry(frm_conn, show="*" if label == "Password" else None, width=30)
+            if label == "Driver":
+                ent = ttk.Combobox(frm_conn, values=available_drivers, width=27, state="readonly")
+                if available_drivers:
+                    ent.current(0)
+            else:
+                ent = ttk.Entry(frm_conn, show="*" if label == "Password" else None, width=30)
             ent.grid(column=1, row=idx, padx=5, pady=2)
             self.entries[label] = ent
 
