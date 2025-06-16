@@ -1,0 +1,118 @@
+import asyncio
+import tkinter as tk
+from tkinter import ttk, scrolledtext, messagebox
+import pyodbc
+from concurrent.futures import ThreadPoolExecutor
+
+
+def get_connection(driver, server, database, uid, pwd):
+    conn_str = (
+        f"DRIVER={driver};"
+        f"SERVER={server};"
+        f"DATABASE={database};"
+        f"UID={uid};"
+        f"PWD={pwd}"
+    )
+    return pyodbc.connect(conn_str)
+
+
+def fetch_query(connection, query, params=None):
+    cursor = connection.cursor()
+    if params:
+        cursor.execute(query, params)
+    else:
+        cursor.execute(query)
+    rows = cursor.fetchall()
+    cursor.close()
+    return rows
+
+
+class App:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Stock and Receivable App")
+        self.conn = None
+        self.loop = asyncio.get_event_loop()
+        self.executor = ThreadPoolExecutor()
+        self.create_widgets()
+
+    def create_widgets(self):
+        frm_conn = ttk.LabelFrame(self.root, text="Connection")
+        frm_conn.grid(column=0, row=0, padx=10, pady=10, sticky="ew")
+
+        labels = ["Driver", "Server", "Database", "User ID", "Password"]
+        self.entries = {}
+        for idx, label in enumerate(labels):
+            ttk.Label(frm_conn, text=label).grid(column=0, row=idx, sticky="e", padx=5, pady=2)
+            ent = ttk.Entry(frm_conn, show="*" if label == "Password" else None, width=30)
+            ent.grid(column=1, row=idx, padx=5, pady=2)
+            self.entries[label] = ent
+
+        btn_connect = ttk.Button(frm_conn, text="Connect", command=self.connect)
+        btn_connect.grid(column=0, row=len(labels), columnspan=2, pady=5)
+
+        frm_query = ttk.LabelFrame(self.root, text="Query")
+        frm_query.grid(column=0, row=1, padx=10, pady=10, sticky="ew")
+
+        ttk.Label(frm_query, text="Stock ID").grid(column=0, row=0, sticky="e", padx=5, pady=2)
+        self.stock_id = ttk.Entry(frm_query, width=20)
+        self.stock_id.grid(column=1, row=0, padx=5, pady=2)
+        btn_stock = ttk.Button(frm_query, text="Get Stock", command=self.get_stock)
+        btn_stock.grid(column=2, row=0, padx=5, pady=2)
+
+        ttk.Label(frm_query, text="Customer ID").grid(column=0, row=1, sticky="e", padx=5, pady=2)
+        self.cust_id = ttk.Entry(frm_query, width=20)
+        self.cust_id.grid(column=1, row=1, padx=5, pady=2)
+        btn_receivable = ttk.Button(frm_query, text="Get Receivable", command=self.get_receivable)
+        btn_receivable.grid(column=2, row=1, padx=5, pady=2)
+
+        self.output = scrolledtext.ScrolledText(self.root, width=60, height=15)
+        self.output.grid(column=0, row=2, padx=10, pady=10)
+
+    def connect(self):
+        driver = self.entries["Driver"].get()
+        server = self.entries["Server"].get()
+        database = self.entries["Database"].get()
+        uid = self.entries["User ID"].get()
+        pwd = self.entries["Password"].get()
+        try:
+            self.conn = get_connection(driver, server, database, uid, pwd)
+            messagebox.showinfo("Connection", "Connected successfully")
+        except Exception as e:
+            messagebox.showerror("Connection failed", str(e))
+
+    async def run_query(self, query, params=None):
+        if not self.conn:
+            messagebox.showwarning("Not connected", "Please connect to the database first")
+            return
+        rows = await self.loop.run_in_executor(self.executor, fetch_query, self.conn, query, params)
+        self.output.delete("1.0", tk.END)
+        for row in rows:
+            self.output.insert(tk.END, f"{row}\n")
+
+    def get_stock(self):
+        stock_id = self.stock_id.get()
+        query = "SELECT * FROM Stocks WHERE StockID = ?"
+        asyncio.ensure_future(self.run_query(query, (stock_id,)), loop=self.loop)
+
+    def get_receivable(self):
+        cust_id = self.cust_id.get()
+        query = "SELECT * FROM Receivables WHERE CustomerID = ?"
+        asyncio.ensure_future(self.run_query(query, (cust_id,)), loop=self.loop)
+
+
+def main():
+    root = tk.Tk()
+    app = App(root)
+    asyncio.ensure_future(asyncio.sleep(0), loop=app.loop)
+    root.protocol("WM_DELETE_WINDOW", root.quit)
+    while True:
+        try:
+            root.update()
+            app.loop.run_until_complete(asyncio.sleep(0.01))
+        except tk.TclError:
+            break
+
+
+if __name__ == "__main__":
+    main()

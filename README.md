@@ -18,3 +18,13 @@ Run the script with Python and ensure `pyodbc` is installed:
 ```bash
 python stock_cari.py
 ```
+
+## Windows-like GUI
+
+If you prefer a simple graphical interface, run `stock_cari_gui.py`. It uses
+`tkinter` and keeps the UI responsive by executing database queries in a
+background thread.
+
+```bash
+python stock_cari_gui.py
+```
