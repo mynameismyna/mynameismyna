@@ -28,49 +28,105 @@ def fetch_query(connection, query, params=None):
     return rows
 
 
-class App:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Stock and Receivable App")
-        self.conn = None
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
-        self.running = True
-        self.executor = ThreadPoolExecutor()
-        self.text_font = tkfont.Font(family="TkFixedFont", size=10)
-        self.create_widgets()
+class ConnectionDialog(tk.Toplevel):
+    """Dialog to collect connection information and attempt to connect."""
 
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(2, weight=1)
-
-    def create_widgets(self):
-        frm_conn = ttk.LabelFrame(self.root, text="Connection")
-        frm_conn.grid(column=0, row=0, padx=10, pady=10, sticky="ew")
+    def __init__(self, parent, info):
+        super().__init__(parent)
+        self.title("Connection")
+        self.resizable(False, False)
+        self.result = None
+        self.grab_set()
+        self.protocol("WM_DELETE_WINDOW", self.cancel)
 
         labels = ["Driver", "Server", "Database", "User ID", "Password"]
         self.entries = {}
         available_drivers = pyodbc.drivers()
         for idx, label in enumerate(labels):
-            ttk.Label(frm_conn, text=label).grid(column=0, row=idx, sticky="e", padx=5, pady=2)
+            ttk.Label(self, text=label).grid(column=0, row=idx, padx=5, pady=2, sticky="e")
             if label == "Driver":
-                ent = ttk.Combobox(frm_conn, values=available_drivers, width=27, state="readonly")
+                ent = ttk.Combobox(self, values=available_drivers, width=27, state="readonly")
                 if available_drivers:
-                    ent.current(0)
+                    current = 0
+                    if info.get(label) in available_drivers:
+                        current = available_drivers.index(info[label])
+                    ent.current(current)
             else:
-                ent = ttk.Entry(frm_conn, show="*" if label == "Password" else None, width=30)
+                ent = ttk.Entry(self, show="*" if label == "Password" else None, width=30)
+                if info.get(label):
+                    ent.insert(0, info[label])
             ent.grid(column=1, row=idx, padx=5, pady=2)
             self.entries[label] = ent
 
-        # connection status indicator
-        self.status_label = ttk.Label(frm_conn, text="● Bağlı Değil", foreground="red")
-        self.status_label.grid(column=2, row=0, rowspan=len(labels), padx=10)
+        btn_ok = ttk.Button(self, text="Connect", command=self.connect)
+        btn_ok.grid(column=0, row=len(labels), padx=5, pady=5)
+        btn_cancel = ttk.Button(self, text="Cancel", command=self.cancel)
+        btn_cancel.grid(column=1, row=len(labels), padx=5, pady=5)
 
-        # connect/disconnect buttons
-        self.btn_connect = ttk.Button(frm_conn, text="Connect", command=self.connect)
-        self.btn_connect.grid(column=0, row=len(labels), padx=5, pady=5)
+    def connect(self):
+        info = {k: e.get() for k, e in self.entries.items()}
+        try:
+            conn = get_connection(info["Driver"], info["Server"], info["Database"], info["User ID"], info["Password"])
+        except Exception as e:
+            messagebox.showerror("Connection failed", str(e), parent=self)
+            return
+        self.result = (conn, info)
+        self.destroy()
 
-        self.btn_disconnect = ttk.Button(frm_conn, text="Disconnect", command=self.disconnect, state="disabled")
-        self.btn_disconnect.grid(column=1, row=len(labels), padx=5, pady=5)
+    def cancel(self):
+        self.destroy()
+
+
+class App:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Stock and Receivable App")
+        self.conn = None
+        self.connection_info = {}
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+        self.running = True
+        self.executor = ThreadPoolExecutor()
+        self.text_font = tkfont.Font(family="TkFixedFont", size=10)
+        self.initialized = False
+
+        self.show_connect_dialog()
+
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(2, weight=1)
+
+    def show_connect_dialog(self):
+        dlg = ConnectionDialog(self.root, self.connection_info)
+        self.root.wait_window(dlg)
+        if dlg.result is None:
+            if not self.initialized:
+                self.running = False
+                self.root.destroy()
+            return
+        self.conn, self.connection_info = dlg.result
+        if not self.initialized:
+            self.create_widgets()
+            self.initialized = True
+        self.status_label.config(text="● Bağlı", foreground="green")
+        self.btn_disconnect.config(state="normal")
+        messagebox.showinfo("Connection", "Connected successfully")
+
+    def create_widgets(self):
+        top = ttk.Frame(self.root)
+        top.grid(column=0, row=0, padx=10, pady=10, sticky="ew")
+        top.columnconfigure(0, weight=1)
+
+        self.status_label = ttk.Label(top, text="● Bağlı", foreground="green")
+        self.status_label.grid(column=0, row=0, sticky="w")
+
+        self.btn_disconnect = ttk.Button(top, text="Disconnect", command=self.disconnect)
+        self.btn_disconnect.grid(column=1, row=0, padx=5)
+
+        self.btn_reconnect = ttk.Button(top, text="Reconnect", command=self.reconnect)
+        self.btn_reconnect.grid(column=2, row=0, padx=5)
+
+        self.btn_update = ttk.Button(top, text="Update Info", command=self.refresh_info)
+        self.btn_update.grid(column=3, row=0, padx=5)
 
         frm_query = ttk.LabelFrame(self.root, text="Query")
         frm_query.grid(column=0, row=1, padx=10, pady=10, sticky="ew")
@@ -109,39 +165,42 @@ class App:
         chk_italic = ttk.Checkbutton(frm_output, text="Italic", variable=self.italic_var, command=self.update_font_style)
         chk_italic.grid(column=3, row=1, sticky="e", pady=(5, 0))
 
-    def connect(self):
-        driver = self.entries["Driver"].get()
-        server = self.entries["Server"].get()
-        database = self.entries["Database"].get()
-        uid = self.entries["User ID"].get()
-        pwd = self.entries["Password"].get()
+    def reconnect(self):
+        if self.conn:
+            self.disconnect(confirm=False)
+        if not self.connection_info:
+            self.refresh_info()
+            return
         try:
-            self.conn = get_connection(driver, server, database, uid, pwd)
+            self.conn = get_connection(
+                self.connection_info["Driver"],
+                self.connection_info["Server"],
+                self.connection_info["Database"],
+                self.connection_info["User ID"],
+                self.connection_info["Password"],
+            )
             self.status_label.config(text="● Bağlı", foreground="green")
-            for key, ent in self.entries.items():
-                ent.config(state="disabled")
-            self.btn_connect.config(state="disabled")
             self.btn_disconnect.config(state="normal")
             messagebox.showinfo("Connection", "Connected successfully")
         except Exception as e:
             messagebox.showerror("Connection failed", str(e))
 
-    def disconnect(self):
+    def disconnect(self, confirm=True):
         if not self.conn:
             return
-        if messagebox.askyesno("Disconnect", "Bağlantıyı Sona Erdirmek İstiyor musunuz?"):
+        if not confirm or messagebox.askyesno("Disconnect", "Bağlantıyı Sona Erdirmek İstiyor musunuz?"):
             try:
                 self.conn.close()
             except Exception:
                 pass
             self.conn = None
             self.status_label.config(text="● Bağlı Değil", foreground="red")
-            for label, ent in self.entries.items():
-                state = "readonly" if label == "Driver" else "normal"
-                ent.config(state=state)
-            self.btn_connect.config(state="normal")
             self.btn_disconnect.config(state="disabled")
             messagebox.showinfo("Disconnect", "Bağlantı sonlandırıldı")
+
+    def refresh_info(self):
+        self.disconnect(confirm=False)
+        self.show_connect_dialog()
 
     async def run_query(self, query, params=None):
         if not self.conn:

@@ -26,12 +26,12 @@ python stock_cari.py --cli
 The GUI itself lives in `stock_cari_gui.py` and uses `tkinter` to keep the UI
 responsive by executing database queries in a background thread.
 
-The GUI now lists available ODBC drivers in a drop-down menu so you can
-select the appropriate driver without typing its name.
+At startup a dialog asks for your connection settings. After a successful
+connection, the main window opens showing a status indicator and buttons to
+**Disconnect**, **Reconnect** using the same credentials, or **Update Info** to
+change the connection details.
 
-Once connected, the connection fields become read-only and a status
-indicator shows whether the app is connected. Use the new **Disconnect**
-button to close the connection safely.
+The driver is selected from a drop-down list of installed ODBC drivers.
 
 The result panel now resizes with the window. Use the **A+** and **A-**
 buttons to adjust text size, and toggle **Bold** or **Italic** to change
