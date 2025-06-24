@@ -26,7 +26,7 @@ def fetch_query(connection, query, params=None):
 async def fetch_query_async(loop, connection, query, params=None):
     return await loop.run_in_executor(None, fetch_query, connection, query, params)
 
-async def main():
+async def main_cli():
     driver = input("Driver: ")
     server = input("Server: ")
     database = input("Database: ")
@@ -64,4 +64,9 @@ async def main():
             print("Invalid choice")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    import sys
+    if "--cli" in sys.argv:
+        asyncio.run(main_cli())
+    else:
+        import stock_cari_gui
+        stock_cari_gui.main()

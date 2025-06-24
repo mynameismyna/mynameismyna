@@ -9,21 +9,22 @@ mynameismyna/mynameismyna is a ✨ special ✨ repository because its `README.md
 You can click the Preview link to take a look at your changes.
 --->
 
-## Stock and Receivable CLI
+## Stock and Receivable Application
 
-This repository includes a small console application `stock_cari.py` which queries a SQL Server for stock and receivable information. The program prompts for connection details at startup and executes queries asynchronously so it does not freeze during database operations.
-
-Run the script with Python and ensure `pyodbc` is installed:
+`stock_cari.py` starts the GUI by default so you can connect and run queries in a
+window without the program freezing. Pass `--cli` if you prefer to use the
+console interface. Ensure `pyodbc` is installed.
 
 ```bash
+# launch the GUI
 python stock_cari.py
+
+# run in command line mode
+python stock_cari.py --cli
 ```
 
-## Windows-like GUI
-
-If you prefer a simple graphical interface, run `stock_cari_gui.py`. It uses
-`tkinter` and keeps the UI responsive by executing database queries in a
-background thread.
+The GUI itself lives in `stock_cari_gui.py` and uses `tkinter` to keep the UI
+responsive by executing database queries in a background thread.
 
 The GUI now lists available ODBC drivers in a drop-down menu so you can
 select the appropriate driver without typing its name.
