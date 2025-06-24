@@ -36,18 +36,18 @@ connection dialog at first.
 The driver is selected from a drop-down list of installed ODBC drivers.
 
 By default the connection dialog fills in the Server as `192.168.129.15` and
-the Database as `BORAOZMAN`. Whatever values you last used are saved to
-`connection.json` so they appear automatically the next time you open the
-program.
+the Database as `BORAOZMAN`. You also specify the **View Name** here. Whatever
+values you last used are saved to `connection.json` so they appear
+automatically the next time you open the program.
 
 Query results appear in a table that fills the lower portion of the window.
 Use the **A+** and **A-** buttons to zoom text within this area only, and
 toggle **Bold** or **Italic** to format the table contents without resizing
 the main window.
 
-You can specify the name of a SQL view and a search term. The application will
-match the term across every column in that view and list the results in the
-table, similar to an elastic search.
+Enter a search term to look up rows in the chosen view. The application matches
+the term across all columns in that view, similar to an elastic search, and
+displays the results in a table.
 
 ```bash
 python stock_cari_gui.py

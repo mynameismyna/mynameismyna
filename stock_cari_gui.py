@@ -11,6 +11,7 @@ CONFIG_FILE = "connection.json"
 DEFAULT_INFO = {
     "Server": "192.168.129.15",
     "Database": "BORAOZMAN",
+    "View Name": "",
 }
 
 
@@ -48,7 +49,7 @@ class ConnectionDialog(tk.Toplevel):
         self.grab_set()
         self.protocol("WM_DELETE_WINDOW", self.cancel)
 
-        labels = ["Driver", "Server", "Database", "User ID", "Password"]
+        labels = ["Driver", "Server", "Database", "View Name", "User ID", "Password"]
         self.entries = {}
         available_drivers = pyodbc.drivers()
         for idx, label in enumerate(labels):
@@ -160,27 +161,11 @@ class App:
         frm_query = ttk.LabelFrame(self.root, text="Query")
         frm_query.grid(column=0, row=1, padx=10, pady=10, sticky="ew")
 
-        ttk.Label(frm_query, text="View Name").grid(column=0, row=0, sticky="e", padx=5, pady=2)
-        self.view_name = ttk.Entry(frm_query, width=20)
-        self.view_name.grid(column=1, row=0, padx=5, pady=2)
-
-        ttk.Label(frm_query, text="Search").grid(column=0, row=1, sticky="e", padx=5, pady=2)
-        self.search_term = ttk.Entry(frm_query, width=20)
-        self.search_term.grid(column=1, row=1, padx=5, pady=2)
+        ttk.Label(frm_query, text="Search").grid(column=0, row=0, sticky="e", padx=5, pady=2)
+        self.search_term = ttk.Entry(frm_query, width=30)
+        self.search_term.grid(column=1, row=0, padx=5, pady=2)
         btn_search = ttk.Button(frm_query, text="Search", command=self.search_view)
-        btn_search.grid(column=2, row=1, padx=5, pady=2)
-
-        ttk.Label(frm_query, text="Stock ID").grid(column=0, row=2, sticky="e", padx=5, pady=2)
-        self.stock_id = ttk.Entry(frm_query, width=20)
-        self.stock_id.grid(column=1, row=2, padx=5, pady=2)
-        btn_stock = ttk.Button(frm_query, text="Get Stock", command=self.get_stock)
-        btn_stock.grid(column=2, row=2, padx=5, pady=2)
-
-        ttk.Label(frm_query, text="Customer ID").grid(column=0, row=3, sticky="e", padx=5, pady=2)
-        self.cust_id = ttk.Entry(frm_query, width=20)
-        self.cust_id.grid(column=1, row=3, padx=5, pady=2)
-        btn_receivable = ttk.Button(frm_query, text="Get Receivable", command=self.get_receivable)
-        btn_receivable.grid(column=2, row=3, padx=5, pady=2)
+        btn_search.grid(column=2, row=0, padx=5, pady=2)
 
         frm_output = ttk.Frame(self.root, width=600, height=250)
         frm_output.grid(column=0, row=2, padx=10, pady=10, sticky="nsew")
@@ -290,10 +275,13 @@ class App:
         self.root.destroy()
 
     def search_view(self):
-        view = self.view_name.get().strip()
+        view = self.connection_info.get("View Name", "").strip()
         term = self.search_term.get().strip()
-        if not view or not term:
-            messagebox.showwarning("Search", "View name and search term are required")
+        if not view:
+            messagebox.showwarning("Search", "View name must be provided in the connection settings")
+            return
+        if not term:
+            messagebox.showwarning("Search", "Search term is required")
             return
         try:
             cursor = self.conn.cursor()
@@ -310,15 +298,7 @@ class App:
             return
         asyncio.ensure_future(self.run_query(query, params), loop=self.loop)
 
-    def get_stock(self):
-        stock_id = self.stock_id.get()
-        query = "SELECT * FROM Stocks WHERE StockID = ?"
-        asyncio.ensure_future(self.run_query(query, (stock_id,)), loop=self.loop)
 
-    def get_receivable(self):
-        cust_id = self.cust_id.get()
-        query = "SELECT * FROM Receivables WHERE CustomerID = ?"
-        asyncio.ensure_future(self.run_query(query, (cust_id,)), loop=self.loop)
 
 
 def main():
