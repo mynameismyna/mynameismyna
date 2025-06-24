@@ -107,6 +107,8 @@ class App:
         if not self.initialized:
             self.create_widgets()
             self.initialized = True
+            # The main window was hidden during startup; show it now
+            self.root.deiconify()
         self.status_label.config(text="● Bağlı", foreground="green")
         self.btn_disconnect.config(state="normal")
         messagebox.showinfo("Connection", "Connected successfully")
@@ -244,6 +246,8 @@ class App:
 
 def main():
     root = tk.Tk()
+    # Hide the main window until a connection is established
+    root.withdraw()
     app = App(root)
     asyncio.ensure_future(asyncio.sleep(0), loop=app.loop)
     root.protocol("WM_DELETE_WINDOW", app.on_close)

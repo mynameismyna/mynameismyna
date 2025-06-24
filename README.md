@@ -30,6 +30,8 @@ At startup a dialog asks for your connection settings. After a successful
 connection, the main window opens showing a status indicator and buttons to
 **Disconnect**, **Reconnect** using the same credentials, or **Update Info** to
 change the connection details.
+The empty main window stays hidden until you connect, so you'll only see the
+connection dialog at first.
 
 The driver is selected from a drop-down list of installed ODBC drivers.
 
