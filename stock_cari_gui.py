@@ -33,7 +33,9 @@ class App:
         self.root = root
         self.root.title("Stock and Receivable App")
         self.conn = None
-        self.loop = asyncio.get_event_loop()
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+        self.running = True
         self.executor = ThreadPoolExecutor()
         self.text_font = tkfont.Font(family="TkFixedFont", size=10)
         self.create_widgets()
@@ -161,6 +163,15 @@ class App:
         slant = "italic" if self.italic_var.get() else "roman"
         self.text_font.configure(weight=weight, slant=slant)
 
+    def on_close(self):
+        self.running = False
+        if self.conn:
+            try:
+                self.conn.close()
+            except Exception:
+                pass
+        self.root.destroy()
+
     def get_stock(self):
         stock_id = self.stock_id.get()
         query = "SELECT * FROM Stocks WHERE StockID = ?"
@@ -176,13 +187,16 @@ def main():
     root = tk.Tk()
     app = App(root)
     asyncio.ensure_future(asyncio.sleep(0), loop=app.loop)
-    root.protocol("WM_DELETE_WINDOW", root.quit)
-    while True:
-        try:
+    root.protocol("WM_DELETE_WINDOW", app.on_close)
+    try:
+        while app.running:
             root.update()
             app.loop.run_until_complete(asyncio.sleep(0.01))
-        except tk.TclError:
-            break
+    except tk.TclError:
+        pass
+    finally:
+        app.loop.run_until_complete(asyncio.sleep(0))
+        app.loop.close()
 
 
 if __name__ == "__main__":

@@ -39,7 +39,8 @@ async def main_cli():
         print(f"Connection failed: {e}")
         return
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     while True:
         print("1. Get stock by ID")
         print("2. Get receivable balance by customer ID")
