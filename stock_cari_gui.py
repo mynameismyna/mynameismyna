@@ -1,9 +1,17 @@
 import asyncio
+import json
+import os
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 from tkinter import font as tkfont
 import pyodbc
 from concurrent.futures import ThreadPoolExecutor
+
+CONFIG_FILE = "connection.json"
+DEFAULT_INFO = {
+    "Server": "192.168.129.15",
+    "Database": "BORAOZMAN",
+}
 
 
 def get_connection(driver, server, database, uid, pwd):
@@ -82,7 +90,8 @@ class App:
         self.root = root
         self.root.title("Stock and Receivable App")
         self.conn = None
-        self.connection_info = {}
+        self.connection_info = DEFAULT_INFO.copy()
+        self.load_config()
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
         self.running = True
@@ -95,6 +104,22 @@ class App:
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(2, weight=1)
 
+    def load_config(self):
+        if os.path.exists(CONFIG_FILE):
+            try:
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                self.connection_info.update(data)
+            except Exception:
+                pass
+
+    def save_config(self):
+        try:
+            with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+                json.dump(self.connection_info, f)
+        except Exception:
+            pass
+
     def show_connect_dialog(self):
         dlg = ConnectionDialog(self.root, self.connection_info)
         self.root.wait_window(dlg)
@@ -104,6 +129,7 @@ class App:
                 self.root.destroy()
             return
         self.conn, self.connection_info = dlg.result
+        self.save_config()
         if not self.initialized:
             self.create_widgets()
             self.initialized = True

@@ -35,6 +35,11 @@ connection dialog at first.
 
 The driver is selected from a drop-down list of installed ODBC drivers.
 
+By default the connection dialog fills in the Server as `192.168.129.15` and
+the Database as `BORAOZMAN`. Whatever values you last used are saved to
+`connection.json` so they appear automatically the next time you open the
+program.
+
 The result panel now resizes with the window. Use the **A+** and **A-**
 buttons to adjust text size, and toggle **Bold** or **Italic** to change
 the formatting of all results.
