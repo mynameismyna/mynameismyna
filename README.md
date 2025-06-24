@@ -45,6 +45,10 @@ Use the **A+** and **A-** buttons to zoom text within this area only, and
 toggle **Bold** or **Italic** to format the table contents without resizing
 the main window.
 
+You can specify the name of a SQL view and a search term. The application will
+match the term across every column in that view and list the results in the
+table, similar to an elastic search.
+
 ```bash
 python stock_cari_gui.py
 ```
