@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+from tkinter import ttk, messagebox
 from tkinter import font as tkfont
 import pyodbc
 from concurrent.futures import ThreadPoolExecutor
@@ -32,8 +32,9 @@ def fetch_query(connection, query, params=None):
     else:
         cursor.execute(query)
     rows = cursor.fetchall()
+    columns = [desc[0] for desc in cursor.description]
     cursor.close()
-    return rows
+    return columns, rows
 
 
 class ConnectionDialog(tk.Toplevel):
@@ -171,27 +172,37 @@ class App:
         btn_receivable = ttk.Button(frm_query, text="Get Receivable", command=self.get_receivable)
         btn_receivable.grid(column=2, row=1, padx=5, pady=2)
 
-        frm_output = ttk.Frame(self.root)
+        frm_output = ttk.Frame(self.root, width=600, height=250)
         frm_output.grid(column=0, row=2, padx=10, pady=10, sticky="nsew")
         frm_output.columnconfigure(0, weight=1)
         frm_output.rowconfigure(0, weight=1)
+        frm_output.grid_propagate(False)
 
-        self.output = scrolledtext.ScrolledText(frm_output, width=60, height=15, font=self.text_font)
+        self.style = ttk.Style(self.root)
+        self.style.configure("Results.Treeview", font=self.text_font)
+
+        self.output = ttk.Treeview(frm_output, show="headings", style="Results.Treeview")
         self.output.grid(column=0, row=0, columnspan=4, sticky="nsew")
 
+        vsb = ttk.Scrollbar(frm_output, orient="vertical", command=self.output.yview)
+        vsb.grid(column=4, row=0, sticky="ns")
+        hsb = ttk.Scrollbar(frm_output, orient="horizontal", command=self.output.xview)
+        hsb.grid(column=0, row=1, columnspan=4, sticky="ew")
+        self.output.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+
         btn_zoom_in = ttk.Button(frm_output, text="A+", command=lambda: self.adjust_font(1))
-        btn_zoom_in.grid(column=0, row=1, sticky="w", pady=(5, 0))
+        btn_zoom_in.grid(column=0, row=2, sticky="w", pady=(5, 0))
 
         btn_zoom_out = ttk.Button(frm_output, text="A-", command=lambda: self.adjust_font(-1))
-        btn_zoom_out.grid(column=1, row=1, sticky="w", pady=(5, 0))
+        btn_zoom_out.grid(column=1, row=2, sticky="w", pady=(5, 0))
 
         self.bold_var = tk.BooleanVar(value=False)
         chk_bold = ttk.Checkbutton(frm_output, text="Bold", variable=self.bold_var, command=self.update_font_style)
-        chk_bold.grid(column=2, row=1, sticky="e", pady=(5, 0))
+        chk_bold.grid(column=2, row=2, sticky="e", pady=(5, 0))
 
         self.italic_var = tk.BooleanVar(value=False)
         chk_italic = ttk.Checkbutton(frm_output, text="Italic", variable=self.italic_var, command=self.update_font_style)
-        chk_italic.grid(column=3, row=1, sticky="e", pady=(5, 0))
+        chk_italic.grid(column=3, row=2, sticky="e", pady=(5, 0))
 
     def reconnect(self):
         if self.conn:
@@ -234,21 +245,30 @@ class App:
         if not self.conn:
             messagebox.showwarning("Not connected", "Please connect to the database first")
             return
-        rows = await self.loop.run_in_executor(self.executor, fetch_query, self.conn, query, params)
-        self.output.delete("1.0", tk.END)
+        columns, rows = await self.loop.run_in_executor(
+            self.executor, fetch_query, self.conn, query, params
+        )
+        self.output.delete(*self.output.get_children())
+        self.output["columns"] = columns
+        for col in columns:
+            self.output.heading(col, text=col)
+            self.output.column(col, width=self.text_font.measure(col) + 20)
         for row in rows:
-            self.output.insert(tk.END, f"{row}\n")
+            values = [str(item) for item in row]
+            self.output.insert("", "end", values=values)
 
     def adjust_font(self, delta):
         size = self.text_font.cget("size") + delta
         if size < 6:
             size = 6
         self.text_font.configure(size=size)
+        self.style.configure("Results.Treeview", font=self.text_font)
 
     def update_font_style(self):
         weight = "bold" if self.bold_var.get() else "normal"
         slant = "italic" if self.italic_var.get() else "roman"
         self.text_font.configure(weight=weight, slant=slant)
+        self.style.configure("Results.Treeview", font=self.text_font)
 
     def on_close(self):
         self.running = False

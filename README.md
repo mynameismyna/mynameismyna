@@ -40,9 +40,10 @@ the Database as `BORAOZMAN`. Whatever values you last used are saved to
 `connection.json` so they appear automatically the next time you open the
 program.
 
-The result panel now resizes with the window. Use the **A+** and **A-**
-buttons to adjust text size, and toggle **Bold** or **Italic** to change
-the formatting of all results.
+Query results appear in a table that fills the lower portion of the window.
+Use the **A+** and **A-** buttons to zoom text within this area only, and
+toggle **Bold** or **Italic** to format the table contents without resizing
+the main window.
 
 ```bash
 python stock_cari_gui.py
