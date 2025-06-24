@@ -54,8 +54,16 @@ class App:
             ent.grid(column=1, row=idx, padx=5, pady=2)
             self.entries[label] = ent
 
-        btn_connect = ttk.Button(frm_conn, text="Connect", command=self.connect)
-        btn_connect.grid(column=0, row=len(labels), columnspan=2, pady=5)
+        # connection status indicator
+        self.status_label = ttk.Label(frm_conn, text="● Bağlı Değil", foreground="red")
+        self.status_label.grid(column=2, row=0, rowspan=len(labels), padx=10)
+
+        # connect/disconnect buttons
+        self.btn_connect = ttk.Button(frm_conn, text="Connect", command=self.connect)
+        self.btn_connect.grid(column=0, row=len(labels), padx=5, pady=5)
+
+        self.btn_disconnect = ttk.Button(frm_conn, text="Disconnect", command=self.disconnect, state="disabled")
+        self.btn_disconnect.grid(column=1, row=len(labels), padx=5, pady=5)
 
         frm_query = ttk.LabelFrame(self.root, text="Query")
         frm_query.grid(column=0, row=1, padx=10, pady=10, sticky="ew")
@@ -83,9 +91,31 @@ class App:
         pwd = self.entries["Password"].get()
         try:
             self.conn = get_connection(driver, server, database, uid, pwd)
+            self.status_label.config(text="● Bağlı", foreground="green")
+            for key, ent in self.entries.items():
+                ent.config(state="disabled")
+            self.btn_connect.config(state="disabled")
+            self.btn_disconnect.config(state="normal")
             messagebox.showinfo("Connection", "Connected successfully")
         except Exception as e:
             messagebox.showerror("Connection failed", str(e))
+
+    def disconnect(self):
+        if not self.conn:
+            return
+        if messagebox.askyesno("Disconnect", "Bağlantıyı Sona Erdirmek İstiyor musunuz?"):
+            try:
+                self.conn.close()
+            except Exception:
+                pass
+            self.conn = None
+            self.status_label.config(text="● Bağlı Değil", foreground="red")
+            for label, ent in self.entries.items():
+                state = "readonly" if label == "Driver" else "normal"
+                ent.config(state=state)
+            self.btn_connect.config(state="normal")
+            self.btn_disconnect.config(state="disabled")
+            messagebox.showinfo("Disconnect", "Bağlantı sonlandırıldı")
 
     async def run_query(self, query, params=None):
         if not self.conn:

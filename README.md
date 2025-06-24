@@ -28,6 +28,10 @@ background thread.
 The GUI now lists available ODBC drivers in a drop-down menu so you can
 select the appropriate driver without typing its name.
 
+Once connected, the connection fields become read-only and a status
+indicator shows whether the app is connected. Use the new **Disconnect**
+button to close the connection safely.
+
 ```bash
 python stock_cari_gui.py
 ```
