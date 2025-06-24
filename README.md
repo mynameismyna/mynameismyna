@@ -32,6 +32,10 @@ Once connected, the connection fields become read-only and a status
 indicator shows whether the app is connected. Use the new **Disconnect**
 button to close the connection safely.
 
+The result panel now resizes with the window. Use the **A+** and **A-**
+buttons to adjust text size, and toggle **Bold** or **Italic** to change
+the formatting of all results.
+
 ```bash
 python stock_cari_gui.py
 ```

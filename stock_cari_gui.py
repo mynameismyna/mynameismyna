@@ -1,6 +1,7 @@
 import asyncio
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
+from tkinter import font as tkfont
 import pyodbc
 from concurrent.futures import ThreadPoolExecutor
 
@@ -34,7 +35,11 @@ class App:
         self.conn = None
         self.loop = asyncio.get_event_loop()
         self.executor = ThreadPoolExecutor()
+        self.text_font = tkfont.Font(family="TkFixedFont", size=10)
         self.create_widgets()
+
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(2, weight=1)
 
     def create_widgets(self):
         frm_conn = ttk.LabelFrame(self.root, text="Connection")
@@ -80,8 +85,27 @@ class App:
         btn_receivable = ttk.Button(frm_query, text="Get Receivable", command=self.get_receivable)
         btn_receivable.grid(column=2, row=1, padx=5, pady=2)
 
-        self.output = scrolledtext.ScrolledText(self.root, width=60, height=15)
-        self.output.grid(column=0, row=2, padx=10, pady=10)
+        frm_output = ttk.Frame(self.root)
+        frm_output.grid(column=0, row=2, padx=10, pady=10, sticky="nsew")
+        frm_output.columnconfigure(0, weight=1)
+        frm_output.rowconfigure(0, weight=1)
+
+        self.output = scrolledtext.ScrolledText(frm_output, width=60, height=15, font=self.text_font)
+        self.output.grid(column=0, row=0, columnspan=4, sticky="nsew")
+
+        btn_zoom_in = ttk.Button(frm_output, text="A+", command=lambda: self.adjust_font(1))
+        btn_zoom_in.grid(column=0, row=1, sticky="w", pady=(5, 0))
+
+        btn_zoom_out = ttk.Button(frm_output, text="A-", command=lambda: self.adjust_font(-1))
+        btn_zoom_out.grid(column=1, row=1, sticky="w", pady=(5, 0))
+
+        self.bold_var = tk.BooleanVar(value=False)
+        chk_bold = ttk.Checkbutton(frm_output, text="Bold", variable=self.bold_var, command=self.update_font_style)
+        chk_bold.grid(column=2, row=1, sticky="e", pady=(5, 0))
+
+        self.italic_var = tk.BooleanVar(value=False)
+        chk_italic = ttk.Checkbutton(frm_output, text="Italic", variable=self.italic_var, command=self.update_font_style)
+        chk_italic.grid(column=3, row=1, sticky="e", pady=(5, 0))
 
     def connect(self):
         driver = self.entries["Driver"].get()
@@ -125,6 +149,17 @@ class App:
         self.output.delete("1.0", tk.END)
         for row in rows:
             self.output.insert(tk.END, f"{row}\n")
+
+    def adjust_font(self, delta):
+        size = self.text_font.cget("size") + delta
+        if size < 6:
+            size = 6
+        self.text_font.configure(size=size)
+
+    def update_font_style(self):
+        weight = "bold" if self.bold_var.get() else "normal"
+        slant = "italic" if self.italic_var.get() else "roman"
+        self.text_font.configure(weight=weight, slant=slant)
 
     def get_stock(self):
         stock_id = self.stock_id.get()
