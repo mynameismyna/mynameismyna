@@ -47,7 +47,8 @@ the main window.
 
 Enter a search term to look up rows in the chosen view. The application matches
 the term across all columns in that view, similar to an elastic search, and
-displays the results in a table.
+displays the results in a table. Press **Enter** in the search field or click
+the **Search** button. An animated indicator appears while the query runs.
 
 ```bash
 python stock_cari_gui.py

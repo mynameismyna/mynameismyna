@@ -164,8 +164,13 @@ class App:
         ttk.Label(frm_query, text="Search").grid(column=0, row=0, sticky="e", padx=5, pady=2)
         self.search_term = ttk.Entry(frm_query, width=30)
         self.search_term.grid(column=1, row=0, padx=5, pady=2)
+        self.search_term.bind("<Return>", lambda e: self.search_view())
         btn_search = ttk.Button(frm_query, text="Search", command=self.search_view)
         btn_search.grid(column=2, row=0, padx=5, pady=2)
+
+        self.progress = ttk.Progressbar(frm_query, mode="indeterminate", length=80)
+        self.progress.grid(column=3, row=0, padx=5, pady=2)
+        self.progress.grid_remove()
 
         frm_output = ttk.Frame(self.root, width=600, height=250)
         frm_output.grid(column=0, row=2, padx=10, pady=10, sticky="nsew")
@@ -240,9 +245,18 @@ class App:
         if not self.conn:
             messagebox.showwarning("Not connected", "Please connect to the database first")
             return
-        columns, rows = await self.loop.run_in_executor(
-            self.executor, fetch_query, self.conn, query, params
-        )
+        self.progress.grid()
+        self.progress.start(10)
+        try:
+            columns, rows = await self.loop.run_in_executor(
+                self.executor, fetch_query, self.conn, query, params
+            )
+        except Exception as e:
+            messagebox.showerror("Query", str(e))
+            return
+        finally:
+            self.progress.stop()
+            self.progress.grid_remove()
         self.output.delete(*self.output.get_children())
         self.output["columns"] = columns
         for col in columns:
