@@ -45,6 +45,11 @@ Use the **A+** and **A-** buttons to zoom text within this area only, and
 toggle **Bold** or **Italic** to format the table contents without resizing
 the main window.
 
+Numeric values are right-aligned and formatted with `.` as the thousands
+separator and `,` as the decimal separator. Column widths adapt automatically
+to their contents and update when the font size changes, but you can still
+manually resize them if you wish. Row height also follows the current font.
+
 Enter a search term to look up rows in the chosen view. The application matches
 the term across all columns in that view, similar to an elastic search, and
 displays the results in a table. Press **Enter** in the search field or click
