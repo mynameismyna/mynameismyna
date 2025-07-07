@@ -42,7 +42,8 @@ automatically the next time you open the program.
 
 Query results now display in a table with grid lines. Columns automatically
 resize to fit their contents and adjust whenever the font size or style
-changes, and dragging a column edge resizes only that column.
+changes. Dragging a column edge resizes only that column, and you can
+double-click a separator between headings to auto-fit the column width.
 Use the **A+** and **A-** buttons to zoom the table text, and toggle **Bold** or
 **Italic** to style all rows and headers. Numeric values are formatted with
 `.` as the thousands separator and `,` as the decimal separator and are

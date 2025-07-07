@@ -209,6 +209,7 @@ class App:
 
         self.tree = ttk.Treeview(frm_output, show="headings")
         self.tree.grid(column=0, row=0, columnspan=4, sticky="nsew")
+        self.tree.bind("<Double-1>", self.on_header_double_click)
 
         vsb = ttk.Scrollbar(frm_output, orient="vertical", command=self.tree.yview)
         vsb.grid(column=4, row=0, sticky="ns")
@@ -332,6 +333,18 @@ class App:
                 cell = self.tree.set(item, col)
                 width = max(width, self.text_font.measure(cell))
             self.tree.column(col, width=width + 20, minwidth=20, stretch=False)
+
+    def on_header_double_click(self, event):
+        """Auto-size a column when its separator is double-clicked."""
+        if self.tree.identify_region(event.x, event.y) != "separator":
+            return
+        col_id = self.tree.identify_column(event.x)
+        if not col_id:
+            return
+        index = int(col_id.lstrip("#")) - 1
+        columns = self.tree["columns"]
+        if 0 <= index < len(columns):
+            self.adjust_column_widths([columns[index]])
 
     def sort_by(self, col, descending):
         """Sort Treeview contents when a column header is clicked."""
