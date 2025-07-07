@@ -192,11 +192,11 @@ class App:
 
         self.style = ttk.Style(self.root)
         self.style.theme_use("clam")
+        # Configure treeview styling so each cell has a border similar to grid lines
         self.style.configure(
             "Results.Treeview",
             font=self.text_font,
             rowheight=self.text_font.metrics("linespace") + 4,
-            bordercolor="#d9d9d9",
             relief="solid",
             borderwidth=1,
         )
@@ -205,12 +205,6 @@ class App:
             borderwidth=1,
             relief="solid",
             font=self.text_font,
-        )
-        self.style.layout(
-            "Results.Treeview",
-            [
-                ("Treeview.field", {"sticky": "nswe", "bordercolor": "#d9d9d9", "borderwidth": 1}),
-            ],
         )
         self.numeric_cols = []
 
