@@ -191,10 +191,26 @@ class App:
         frm_output.grid_propagate(False)
 
         self.style = ttk.Style(self.root)
+        self.style.theme_use("clam")
         self.style.configure(
             "Results.Treeview",
             font=self.text_font,
             rowheight=self.text_font.metrics("linespace") + 4,
+            bordercolor="#d9d9d9",
+            relief="solid",
+            borderwidth=1,
+        )
+        self.style.configure(
+            "Results.Treeview.Heading",
+            borderwidth=1,
+            relief="solid",
+            font=self.text_font,
+        )
+        self.style.layout(
+            "Results.Treeview",
+            [
+                ("Treeview.field", {"sticky": "nswe", "bordercolor": "#d9d9d9", "borderwidth": 1}),
+            ],
         )
         self.numeric_cols = []
 
@@ -305,6 +321,7 @@ class App:
             font=self.text_font,
             rowheight=self.text_font.metrics("linespace") + 4,
         )
+        self.style.configure("Results.Treeview.Heading", font=self.text_font)
         self.update_row_col_sizes()
 
     def update_font_style(self):
@@ -316,6 +333,7 @@ class App:
             font=self.text_font,
             rowheight=self.text_font.metrics("linespace") + 4,
         )
+        self.style.configure("Results.Treeview.Heading", font=self.text_font)
         self.update_row_col_sizes()
 
     def update_row_col_sizes(self):
@@ -323,7 +341,8 @@ class App:
         if not self.output["columns"]:
             return
         rowheight = self.text_font.metrics("linespace") + 4
-        self.style.configure("Results.Treeview", rowheight=rowheight)
+        self.style.configure("Results.Treeview", rowheight=rowheight, font=self.text_font)
+        self.style.configure("Results.Treeview.Heading", font=self.text_font)
         for idx, col in enumerate(self.output["columns"]):
             anchor = "e" if idx in self.numeric_cols else "w"
             header_width = self.text_font.measure(col)
