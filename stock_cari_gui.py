@@ -293,7 +293,8 @@ class App:
         for col in columns:
             anchor = "e" if col in numeric_cols else "w"
             self.tree.heading(col, text=col, command=lambda c=col: self.sort_by(c, False))
-            self.tree.column(col, anchor=anchor)
+            # disable stretching so resizing one column won't change others
+            self.tree.column(col, anchor=anchor, stretch=False)
         for row in rows:
             display = []
             for item in row:
@@ -330,7 +331,7 @@ class App:
             for item in self.tree.get_children():
                 cell = self.tree.set(item, col)
                 width = max(width, self.text_font.measure(cell))
-            self.tree.column(col, width=width + 20, minwidth=20)
+            self.tree.column(col, width=width + 20, minwidth=20, stretch=False)
 
     def sort_by(self, col, descending):
         """Sort Treeview contents when a column header is clicked."""
