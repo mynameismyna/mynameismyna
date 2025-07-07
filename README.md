@@ -40,18 +40,17 @@ the Database as `BORAOZMAN`. You also specify the **View Name** here. Whatever
 values you last used are saved to `connection.json` so they appear
 automatically the next time you open the program.
 
-Query results appear in a resizable text area at the bottom of the window.
-Use the **A+** and **A-** buttons to zoom the text, and toggle **Bold** or
-**Italic** to style the output. All text in the result area updates when these
-options are changed.
-
-Numeric values are formatted with `.` as the thousands separator and `,` as the
-decimal separator. The text area grows with the window so you can easily read
-wide rows.
+Query results now display in a table with grid lines. Columns automatically
+resize to fit their contents and adjust whenever the font size or style
+changes.
+Use the **A+** and **A-** buttons to zoom the table text, and toggle **Bold** or
+**Italic** to style all rows and headers. Numeric values are formatted with
+`.` as the thousands separator and `,` as the decimal separator and are
+right‑aligned for easier reading.
 
 Enter a search term to look up rows in the chosen view. The application matches
 the term across all columns in that view, similar to an elastic search, and
-displays the results in the text area. Press **Enter** in the search field or click
+displays the results in the table. Press **Enter** in the search field or click
 the **Search** button. An animated indicator appears while the query runs.
 
 ```bash

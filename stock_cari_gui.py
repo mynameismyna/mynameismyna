@@ -158,6 +158,23 @@ class App:
         top.grid(column=0, row=0, padx=10, pady=10, sticky="ew")
         top.columnconfigure(0, weight=1)
 
+        self.style = ttk.Style(self.root)
+        self.style.theme_use("clam")
+        self.style.configure(
+            "Treeview",
+            font=self.text_font,
+            rowheight=self.text_font.metrics("linespace") + 6,
+            bordercolor="#d9d9d9",
+            relief="flat",
+        )
+        self.style.configure("Treeview.Heading", font=self.text_font)
+        self.style.layout(
+            "Treeview",
+            [
+                ("Treeview.field", {"sticky": "nswe", "bordercolor": "#d9d9d9", "borderwidth": 1}),
+            ],
+        )
+
         self.status_label = ttk.Label(top, text="● Bağlı", foreground="green")
         self.status_label.grid(column=0, row=0, sticky="w")
 
@@ -190,14 +207,14 @@ class App:
         frm_output.rowconfigure(0, weight=1)
         frm_output.grid_propagate(False)
 
-        self.output = tk.Text(frm_output, wrap="none", font=self.text_font)
-        self.output.grid(column=0, row=0, columnspan=4, sticky="nsew")
+        self.tree = ttk.Treeview(frm_output, show="headings")
+        self.tree.grid(column=0, row=0, columnspan=4, sticky="nsew")
 
-        vsb = ttk.Scrollbar(frm_output, orient="vertical", command=self.output.yview)
+        vsb = ttk.Scrollbar(frm_output, orient="vertical", command=self.tree.yview)
         vsb.grid(column=4, row=0, sticky="ns")
-        hsb = ttk.Scrollbar(frm_output, orient="horizontal", command=self.output.xview)
+        hsb = ttk.Scrollbar(frm_output, orient="horizontal", command=self.tree.xview)
         hsb.grid(column=0, row=1, columnspan=4, sticky="ew")
-        self.output.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+        self.tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
 
         btn_zoom_in = ttk.Button(frm_output, text="A+", command=lambda: self.adjust_font(1))
         btn_zoom_in.grid(column=0, row=2, sticky="w", pady=(5, 0))
@@ -266,9 +283,17 @@ class App:
         finally:
             self.progress.stop()
             self.progress.grid_remove()
-        self.output.delete("1.0", "end")
-        header = "\t".join(columns)
-        self.output.insert("end", header + "\n")
+        self.tree.delete(*self.tree.get_children())
+        self.tree['columns'] = columns
+        numeric_cols = set()
+        for row in rows:
+            for idx, val in enumerate(row):
+                if is_number(val) and val is not None:
+                    numeric_cols.add(columns[idx])
+        for col in columns:
+            anchor = "e" if col in numeric_cols else "w"
+            self.tree.heading(col, text=col)
+            self.tree.column(col, anchor=anchor)
         for row in rows:
             display = []
             for item in row:
@@ -276,20 +301,35 @@ class App:
                     display.append(format_number(item))
                 else:
                     display.append("" if item is None else str(item))
-            self.output.insert("end", "\t".join(display) + "\n")
+            self.tree.insert("", "end", values=display)
+        self.adjust_column_widths(columns)
 
     def adjust_font(self, delta):
         size = self.text_font.cget("size") + delta
         if size < 6:
             size = 6
         self.text_font.configure(size=size)
-        self.output.configure(font=self.text_font)
+        self.tree.configure(font=self.text_font)
+        self.style.configure("Treeview", rowheight=self.text_font.metrics("linespace") + 6)
+        self.style.configure("Treeview.Heading", font=self.text_font)
+        self.adjust_column_widths(self.tree['columns'])
 
     def update_font_style(self):
         weight = "bold" if self.bold_var.get() else "normal"
         slant = "italic" if self.italic_var.get() else "roman"
         self.text_font.configure(weight=weight, slant=slant)
-        self.output.configure(font=self.text_font)
+        self.tree.configure(font=self.text_font)
+        self.style.configure("Treeview", rowheight=self.text_font.metrics("linespace") + 6)
+        self.style.configure("Treeview.Heading", font=self.text_font)
+        self.adjust_column_widths(self.tree['columns'])
+
+    def adjust_column_widths(self, columns):
+        for col in columns:
+            width = self.text_font.measure(col)
+            for item in self.tree.get_children():
+                cell = self.tree.set(item, col)
+                width = max(width, self.text_font.measure(cell))
+            self.tree.column(col, width=width + 20, minwidth=20)
 
 
     def on_close(self):
