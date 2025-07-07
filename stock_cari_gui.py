@@ -292,7 +292,7 @@ class App:
                     numeric_cols.add(columns[idx])
         for col in columns:
             anchor = "e" if col in numeric_cols else "w"
-            self.tree.heading(col, text=col)
+            self.tree.heading(col, text=col, command=lambda c=col: self.sort_by(c, False))
             self.tree.column(col, anchor=anchor)
         for row in rows:
             display = []
@@ -302,6 +302,7 @@ class App:
                 else:
                     display.append("" if item is None else str(item))
             self.tree.insert("", "end", values=display)
+        self.numeric_cols = numeric_cols
         self.adjust_column_widths(columns)
 
     def adjust_font(self, delta):
@@ -330,6 +331,27 @@ class App:
                 cell = self.tree.set(item, col)
                 width = max(width, self.text_font.measure(cell))
             self.tree.column(col, width=width + 20, minwidth=20)
+
+    def sort_by(self, col, descending):
+        """Sort Treeview contents when a column header is clicked."""
+        data = []
+        for child in self.tree.get_children(''):
+            val = self.tree.set(child, col)
+            if col in getattr(self, 'numeric_cols', set()):
+                try:
+                    key = float(val.replace('.', '').replace(',', '.'))
+                except ValueError:
+                    key = 0
+            else:
+                key = val.lower()
+            data.append((key, child))
+
+        data.sort(reverse=descending)
+        for index, (_, child) in enumerate(data):
+            self.tree.move(child, '', index)
+
+        # toggle sort direction for next click
+        self.tree.heading(col, command=lambda c=col: self.sort_by(c, not descending))
 
 
     def on_close(self):

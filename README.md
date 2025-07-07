@@ -48,6 +48,9 @@ Use the **A+** and **A-** buttons to zoom the table text, and toggle **Bold** or
 `.` as the thousands separator and `,` as the decimal separator and are
 right‑aligned for easier reading.
 
+Click any column heading to sort the results ascending or descending. Numeric
+columns sort numerically, while text columns sort alphabetically.
+
 Enter a search term to look up rows in the chosen view. The application matches
 the term across all columns in that view, similar to an elastic search, and
 displays the results in the table. Press **Enter** in the search field or click
