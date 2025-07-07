@@ -164,14 +164,14 @@ class App:
             "Treeview",
             font=self.text_font,
             rowheight=self.text_font.metrics("linespace") + 6,
-            bordercolor="#d9d9d9",
             relief="flat",
         )
         self.style.configure("Treeview.Heading", font=self.text_font)
+        # Use a simple layout that works across Tk versions
         self.style.layout(
             "Treeview",
             [
-                ("Treeview.field", {"sticky": "nswe", "bordercolor": "#d9d9d9", "borderwidth": 1}),
+                ("Treeview.field", {"sticky": "nswe", "border": 1}),
             ],
         )
 
