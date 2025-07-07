@@ -190,25 +190,7 @@ class App:
         frm_output.rowconfigure(0, weight=1)
         frm_output.grid_propagate(False)
 
-        self.style = ttk.Style(self.root)
-        self.style.theme_use("clam")
-        # Configure treeview styling so each cell has a border similar to grid lines
-        self.style.configure(
-            "Results.Treeview",
-            font=self.text_font,
-            rowheight=self.text_font.metrics("linespace") + 4,
-            relief="solid",
-            borderwidth=1,
-        )
-        self.style.configure(
-            "Results.Treeview.Heading",
-            borderwidth=1,
-            relief="solid",
-            font=self.text_font,
-        )
-        self.numeric_cols = []
-
-        self.output = ttk.Treeview(frm_output, show="headings", style="Results.Treeview")
+        self.output = tk.Text(frm_output, wrap="none", font=self.text_font)
         self.output.grid(column=0, row=0, columnspan=4, sticky="nsew")
 
         vsb = ttk.Scrollbar(frm_output, orient="vertical", command=self.output.yview)
@@ -284,69 +266,31 @@ class App:
         finally:
             self.progress.stop()
             self.progress.grid_remove()
-        self.output.delete(*self.output.get_children())
-        self.output["columns"] = columns
-        self.numeric_cols = [
-            i
-            for i in range(len(columns))
-            if any(is_number(row[i]) for row in rows if row[i] is not None)
-        ]
-        for idx, col in enumerate(columns):
-            anchor = "e" if idx in self.numeric_cols else "w"
-            self.output.heading(col, text=col, anchor=anchor)
-            self.output.column(col, anchor=anchor, width=self.text_font.measure(col) + 20, stretch=True)
+        self.output.delete("1.0", "end")
+        header = "\t".join(columns)
+        self.output.insert("end", header + "\n")
         for row in rows:
             display = []
-            for i, item in enumerate(row):
-                if i in self.numeric_cols and item is not None:
+            for item in row:
+                if is_number(item) and item is not None:
                     display.append(format_number(item))
                 else:
                     display.append("" if item is None else str(item))
-            self.output.insert("", "end", values=display)
-        self.update_row_col_sizes()
+            self.output.insert("end", "\t".join(display) + "\n")
 
     def adjust_font(self, delta):
         size = self.text_font.cget("size") + delta
         if size < 6:
             size = 6
         self.text_font.configure(size=size)
-        self.style.configure(
-            "Results.Treeview",
-            font=self.text_font,
-            rowheight=self.text_font.metrics("linespace") + 4,
-        )
-        self.style.configure("Results.Treeview.Heading", font=self.text_font)
-        self.update_row_col_sizes()
+        self.output.configure(font=self.text_font)
 
     def update_font_style(self):
         weight = "bold" if self.bold_var.get() else "normal"
         slant = "italic" if self.italic_var.get() else "roman"
         self.text_font.configure(weight=weight, slant=slant)
-        self.style.configure(
-            "Results.Treeview",
-            font=self.text_font,
-            rowheight=self.text_font.metrics("linespace") + 4,
-        )
-        self.style.configure("Results.Treeview.Heading", font=self.text_font)
-        self.update_row_col_sizes()
+        self.output.configure(font=self.text_font)
 
-    def update_row_col_sizes(self):
-        """Adjust column widths and row height based on current font."""
-        if not self.output["columns"]:
-            return
-        rowheight = self.text_font.metrics("linespace") + 4
-        self.style.configure("Results.Treeview", rowheight=rowheight, font=self.text_font)
-        self.style.configure("Results.Treeview.Heading", font=self.text_font)
-        for idx, col in enumerate(self.output["columns"]):
-            anchor = "e" if idx in self.numeric_cols else "w"
-            header_width = self.text_font.measure(col)
-            max_width = header_width
-            for item in self.output.get_children():
-                text = self.output.set(item, col)
-                width = self.text_font.measure(text)
-                if width > max_width:
-                    max_width = width
-            self.output.column(col, width=max_width + 20, anchor=anchor)
 
     def on_close(self):
         self.running = False
